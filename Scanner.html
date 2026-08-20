@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ms">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width,
+      initial-scale=1.0,
+      maximum-scale=1.0,
+      user-scalable=no">
+
+<title>Ujian QR Camera</title>
+
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+<style>
+
+body {
+  margin: 0;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  background: #f1f5f9;
+  text-align: center;
+}
+
+.container {
+  max-width: 500px;
+  margin: auto;
+  background: white;
+  padding: 20px;
+  border-radius: 20px;
+}
+
+h1 {
+  font-size: 25px;
+}
+
+#reader {
+  width: 100%;
+  max-width: 450px;
+  margin: 20px auto;
+}
+
+#status {
+  margin: 15px 0;
+  padding: 15px;
+  border-radius: 10px;
+  background: #e2e8f0;
+  white-space: pre-wrap;
+}
+
+button {
+  width: 100%;
+  max-width: 350px;
+  padding: 15px;
+  border: none;
+  border-radius: 12px;
+  background: #2563eb;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+#result {
+  margin-top: 20px;
+  padding: 20px;
+  border-radius: 15px;
+  background: #dcfce7;
+  font-size: 20px;
+  font-weight: bold;
+  display: none;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>📷 UJIAN QR CAMERA</h1>
+
+<div id="status">
+Kamera belum dimulakan.
+</div>
+
+<div id="reader"></div>
+
+<button onclick="mulaScan()">
+📷 MULA SCAN
+</button>
+
+<div id="result"></div>
+
+</div>
+
+
+<script>
+
+let scanner = null;
+
+let sedangScan = false;
+
+
+async function mulaScan() {
+
+  if (sedangScan) {
+    return;
+  }
+
+  document.getElementById("status").innerText =
+    "⏳ Mencari kamera...";
+
+  try {
+
+    const cameras =
+      await Html5Qrcode.getCameras();
+
+    console.log(
+      "CAMERA:",
+      cameras
+    );
+
+    if (
+      !cameras ||
+      cameras.length === 0
+    ) {
+
+      throw new Error(
+        "Tiada kamera dijumpai."
+      );
+
+    }
+
+    /*
+     * Gunakan kamera pertama
+     */
+
+    let cameraId =
+      cameras[0].id;
+
+
+    /*
+     * Cuba cari kamera belakang
+     */
+
+    for (
+      let i = 0;
+      i < cameras.length;
+      i++
+    ) {
+
+      const label =
+        (
+          cameras[i].label ||
+          ""
+        ).toLowerCase();
+
+
+      if (
+        label.includes("back") ||
+        label.includes("rear") ||
+        label.includes("environment")
+      ) {
+
+        cameraId =
+          cameras[i].id;
+
+        break;
+
+      }
+
+    }
+
+
+    scanner =
+      new Html5Qrcode(
+        "reader"
+      );
+
+
+    sedangScan = true;
+
+
+    await scanner.start(
+
+      cameraId,
+
+      {
+        fps: 10,
+
+        qrbox: {
+          width: 250,
+          height: 250
+        }
+      },
+
+
+      function(decodedText) {
+
+        qrBerjaya(
+          decodedText
+        );
+
+      },
+
+
+      function(errorMessage) {
+
+        // Abaikan error scan biasa
+
+      }
+
+    );
+
+
+    document.getElementById(
+      "status"
+    ).innerText =
+      "📷 KAMERA AKTIF\n\n" +
+      "Halakan QR Code ke kotak.";
+
+
+  } catch (error) {
+
+    console.error(error);
+
+    document.getElementById(
+      "status"
+    ).innerText =
+      "❌ GAGAL MEMBUKA KAMERA\n\n" +
+      error.name +
+      "\n" +
+      error.message;
+
+  }
+
+}
+
+
+async function qrBerjaya(
+  decodedText
+) {
+
+  if (!sedangScan) {
+    return;
+  }
+
+  sedangScan = false;
+
+
+  document.getElementById(
+    "result"
+  ).style.display =
+    "block";
+
+
+  document.getElementById(
+    "result"
+  ).innerText =
+    "✅ QR BERJAYA DIBACA\n\n" +
+    decodedText;
+
+
+  document.getElementById(
+    "status"
+  ).innerText =
+    "🎉 BERJAYA!";
+
+
+  try {
+
+    await scanner.stop();
+
+  } catch (error) {
+
+    console.log(error);
+
+  }
+
+}
+
+</script>
+
+</body>
+
+</html>
