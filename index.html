@@ -118,7 +118,7 @@ function popup(msg,kelas){
 }
 
 /******************************************
- SUARA
+ SUARA PEREMPUAN
 ******************************************/
 
 function cakap(text){
@@ -130,60 +130,115 @@ function cakap(text){
     const suara =
       new SpeechSynthesisUtterance(text);
 
+
     /*
-     * BAHASA
+     * BAHASA MELAYU
      */
     suara.lang = "ms-MY";
 
 
     /*
      * KELAJUAN
-     *
-     * 1.0 = normal
-     * 0.9 = sedikit perlahan
-     * 0.8 = perlahan
-     * 1.1 = sedikit laju
      */
     suara.rate = 0.9;
 
 
     /*
-     * NADA SUARA
+     * NADA
      *
-     * 1.0 = normal
-     * 0.8 = lebih rendah
-     * 1.2 = lebih tinggi
+     * Sedikit tinggi supaya
+     * bunyi lebih feminin
      */
-    suara.pitch = 1.0;
+    suara.pitch = 1.15;
 
 
     /*
      * VOLUME
-     *
-     * 0.0 - 1.0
      */
     suara.volume = 1.0;
 
 
     /*
-     * CARI SUARA MELAYU
+     * DAPATKAN SEMUA VOICE
      */
-
     const voices =
       speechSynthesis.getVoices();
 
 
+    /*
+     * CARI VOICE MELAYU
+     */
     let voice =
       voices.find(
         v =>
-          v.lang.toLowerCase()
-            .startsWith("ms")
+          (
+            v.lang || ""
+          )
+          .toLowerCase()
+          .startsWith("ms")
       );
 
 
     /*
-     * Jika tiada suara Melayu,
-     * cuba Bahasa Indonesia
+     * Jika ada nama voice yang
+     * menunjukkan suara perempuan,
+     * utamakan voice tersebut.
+     */
+
+    const femaleKeywords = [
+
+      "female",
+      "woman",
+      "girl",
+      "siti",
+      "melayu",
+      "malay"
+
+    ];
+
+
+    const femaleVoice =
+      voices.find(
+        v => {
+
+          const name =
+            (
+              v.name || ""
+            ).toLowerCase();
+
+
+          const lang =
+            (
+              v.lang || ""
+            ).toLowerCase();
+
+
+          return (
+
+            lang.startsWith("ms") &&
+
+            femaleKeywords.some(
+              keyword =>
+                name.includes(keyword)
+            )
+
+          );
+
+        }
+      );
+
+
+    if(femaleVoice){
+
+      voice =
+        femaleVoice;
+
+    }
+
+
+    /*
+     * JIKA TIADA VOICE MELAYU
+     * CUBA INDONESIA
      */
 
     if(!voice){
@@ -191,8 +246,49 @@ function cakap(text){
       voice =
         voices.find(
           v =>
-            v.lang.toLowerCase()
-              .startsWith("id")
+            (
+              v.lang || ""
+            )
+            .toLowerCase()
+            .startsWith("id")
+        );
+
+    }
+
+
+    /*
+     * JIKA MASIH TIADA,
+     * CUBA VOICE ENGLISH FEMALE
+     */
+
+    if(!voice){
+
+      voice =
+        voices.find(
+          v => {
+
+            const name =
+              (
+                v.name || ""
+              ).toLowerCase();
+
+
+            return (
+
+              (
+                v.lang || ""
+              )
+              .toLowerCase()
+              .startsWith("en") &&
+
+              femaleKeywords.some(
+                keyword =>
+                  name.includes(keyword)
+              )
+
+            );
+
+          }
         );
 
     }
@@ -200,7 +296,14 @@ function cakap(text){
 
     if(voice){
 
-      suara.voice = voice;
+      suara.voice =
+        voice;
+
+      console.log(
+        "VOICE DIPILIH:",
+        voice.name,
+        voice.lang
+      );
 
     }
 
@@ -208,6 +311,7 @@ function cakap(text){
     speechSynthesis.speak(
       suara
     );
+
 
   }catch(e){
 
@@ -219,7 +323,6 @@ function cakap(text){
   }
 
 }
-
 /******************************************
  SCAN BERJAYA
 ******************************************/
