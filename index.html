@@ -8,15 +8,15 @@ async function onScanSuccess(qrText) {
     const data = await res.json();
 
     if (data.status === "BERJAYA") {
-      // Papar nama (jika ada) serta masa imbasan dalam popup & suara
-      const infoNama = data.nama ? `<br><small style="font-size:16px;">${data.nama}</small>` : '';
-      const infoMasa = `<br><small style="font-size:14px; opacity:0.9;">Masa: ${data.masa}</small>`;
+      // Format nama dan masa dengan tag HTML <br>
+      const infoNama = data.nama ? `<br><span style="font-size:18px;">${data.nama}</span>` : '';
+      const infoMasa = `<br><span style="font-size:14px; opacity:0.9;">Masa: ${data.masa}</span>`;
       
       cakap("Thank you. Your attendance has been recorded.");
-      popup(`✅<br>RECORDED SUCCESSFUL${infoNama}${infoMasa}`, "success");
+      popup(`✅<br>RECORDED SUCCESSFULLY${infoNama}${infoMasa}`, "success");
     } 
     else if (data.status === "SUDAH_HADIR") {
-      const infoNama = data.nama ? `<br><small style="font-size:16px;">${data.nama}</small>` : '';
+      const infoNama = data.nama ? `<br><span style="font-size:18px;">${data.nama}</span>` : '';
       
       cakap("You have already been recorded as present today.");
       popup(`⚠️<br>ALREADY PRESENT${infoNama}`, "warning");
