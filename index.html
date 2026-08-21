@@ -1,457 +1,232 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
-
-<meta charset="UTF-8">
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Attendance Scanner</title>
-
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-
-<style>
-
-body {
-
-margin: 0;
-
-font-family: Arial, sans-serif;
-
-background: #f5f7fa;
-
-text-align: center;
-
-}
-
-
-
-h1 {
-
-margin-top: 15px;
-
-margin-bottom: 5px;
-
-font-size: 26px;
-
-}
-
-
-
-p {
-
-margin-top: 0;
-
-color: #666;
-
-}
-
-
-
-/* Controls Layout */
-
-.controls-container {
-
-margin: 15px auto;
-
-display: flex;
-
-justify-content: center;
-
-gap: 10px;
-
-flex-wrap: wrap;
-
-}
-
-
-
-select, button {
-
-padding: 10px 16px;
-
-font-size: 16px;
-
-font-weight: bold;
-
-border-radius: 8px;
-
-border: 1px solid #ccc;
-
-outline: none;
-
-}
-
-
-
-select {
-
-background-color: white;
-
-cursor: pointer;
-
-}
-
-
-
-#start-btn {
-
-background-color: #2563eb;
-
-color: white;
-
-border: none;
-
-cursor: pointer;
-
-box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-
-}
-
-
-
-#start-btn:active {
-
-background-color: #1d4ed8;
-
-}
-
-
-
-#reader {
-
-width: 100%;
-
-max-width: 500px;
-
-margin: auto;
-
-}
-
-
-
-/* Popup Display */
-
-#popup {
-
-position: fixed;
-
-top: 50%;
-
-left: 50%;
-
-transform: translate(-50%, -50%);
-
-min-width: 280px;
-
-max-width: 90%;
-
-padding: 25px;
-
-border-radius: 20px;
-
-font-size: 24px;
-
-font-weight: bold;
-
-color: white;
-
-display: none;
-
-z-index: 9999;
-
-box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-
-}
-
-
-
-.success { background: #16a34a; }
-
-.warning { background: #ca8a04; }
-
-.danger { background: #dc2626; }
-
-</style>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attendance Scanner</title>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f7fa;
+      text-align: center;
+    }
+
+    h1 {
+      margin-top: 15px;
+      margin-bottom: 5px;
+      font-size: 26px;
+    }
+
+    p {
+      margin-top: 0;
+      color: #666;
+    }
+
+    /* Controls Layout */
+    .controls-container {
+      margin: 15px auto;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    select, button {
+      padding: 10px 16px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      outline: none;
+    }
+
+    select {
+      background-color: white;
+      cursor: pointer;
+    }
+
+    #start-btn {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    #start-btn:active {
+      background-color: #1d4ed8;
+    }
+
+    #reader {
+      width: 100%;
+      max-width: 500px;
+      margin: auto;
+    }
+
+    /* Popup Display */
+    #popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      min-width: 280px;
+      max-width: 90%;
+      padding: 25px;
+      border-radius: 20px;
+      font-size: 22px;
+      font-weight: bold;
+      color: white;
+      display: none;
+      z-index: 9999;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    .success { background: #16a34a; }
+    .warning { background: #ca8a04; }
+    .danger  { background: #dc2626; }
+  </style>
 </head>
-
 <body>
 
-
-
-<h1>📷 ATTENDANCE SCANNER</h1>
-
-<p>Scan Student QR Code</p>
-
-
-
-<div class="controls-container">
-
-<select id="camera-select">
-
-<option value="user" selected>📷 Kamera Depan (Front)</option>
-
-<option value="environment">📸 Kamera Belakang (Back)</option>
-
-</select>
-
-<button id="start-btn" onclick="mulaKamera()">MULA SCANNER</button>
-
-</div>
-
-
-
-<div id="reader"></div>
-
-<div id="popup"></div>
-
-
-
-<script>
-
-const API = "https://script.google.com/macros/s/AKfycbx4WM4cm1rNr8QePCjtsRtA4G2_vyQN96Q_KTN7eYkqTqPG5t1Mt65tINazBFtNh9yg/exec";
-
-
-
-let scanner = null;
-
-let sedangProses = false;
-
-
-
-function popup(msg, kelas) {
-
-const p = document.getElementById("popup");
-
-p.className = kelas;
-
-p.innerHTML = msg;
-
-p.style.display = "block";
-
-
-
-setTimeout(() => {
-
-p.style.display = "none";
-
-}, 2000);
-
-}
-
-
-
-function cakap(text) {
-
-try {
-
-speechSynthesis.cancel();
-
-const suara = new SpeechSynthesisUtterance(text);
-
-suara.lang = "en-US";
-
-suara.rate = 0.9;
-
-suara.pitch = 1.15;
-
-suara.volume = 1.0;
-
-
-
-const voices = speechSynthesis.getVoices();
-
-const femaleKeywords = ["female", "woman", "girl", "samantha", "karen", "susan", "zira", "jenny", "aria", "ava", "emma", "sara", "sarah"];
-
-
-
-let voice = voices.find(v =>
-
-v.lang.toLowerCase().startsWith("en") &&
-
-femaleKeywords.some(keyword => v.name.toLowerCase().includes(keyword))
-
-);
-
-
-
-if (!voice) voice = voices.find(v => v.lang.toLowerCase() === "en-us");
-
-if (!voice) voice = voices.find(v => v.lang.toLowerCase().startsWith("en"));
-
-
-
-if (voice) suara.voice = voice;
-
-speechSynthesis.speak(suara);
-
-} catch (e) {
-
-console.log("Ralat suara:", e);
-
-}
-
-}
-
-
-
-async function onScanSuccess(qrText) {
-
-if (sedangProses) return;
-
-sedangProses = true;
-
-
-
-try {
-
-const url = API + "?id=" + encodeURIComponent(qrText) + "&t=" + Date.now();
-
-const res = await fetch(url);
-
-const data = await res.json();
-
-
-
-if (data.status === "BERJAYA") {
-
-cakap("Thank you. Your attendance has been recorded successfully.");
-
-popup("✅<br>SUCCESSFULLY RECORDED", "success");
-
-}
-
-else if (data.status === "SUDAH_HADIR") {
-
-cakap("You have already been recorded as present today.");
-
-popup("⚠️<br>ALREADY PRESENT", "warning");
-
-}
-
-else if (data.status === "TIDAK_DIJUMPAI") {
-
-cakap("Sorry. This QR code is not recognized.");
-
-popup("❌<br>QR CODE NOT RECOGNIZED", "danger");
-
-}
-
-else {
-
-cakap("Sorry. There was a problem recording your attendance.");
-
-popup("❌<br>RECORDING ERROR", "danger");
-
-}
-
-} catch (err) {
-
-console.log("SCAN ERROR:", err);
-
-cakap("Sorry. There was a problem connecting to the attendance system.");
-
-popup("❌<br>CONNECTION ERROR", "danger");
-
-}
-
-
-
-setTimeout(() => {
-
-sedangProses = false;
-
-}, 2000);
-
-}
-
-
-
-async function mulaKamera() {
-
-if (speechSynthesis) speechSynthesis.getVoices();
-
-
-
-const pilihanKamera = document.getElementById("camera-select").value;
-
-
-
-try {
-
-// Jika scanner sedang berjalan, hentikan dulu sebelum tukar kamera
-
-if (scanner) {
-
-await scanner.stop();
-
-} else {
-
-scanner = new Html5Qrcode("reader");
-
-}
-
-
-
-// Mula imbasan dengan mod kamera yang dipilih
-
-await scanner.start(
-
-{ facingMode: pilihanKamera },
-
-{ fps: 10, qrbox: 250 },
-
-onScanSuccess
-
-);
-
-
-
-document.getElementById("start-btn").innerText = "TUKAR KAMERA";
-
-
-
-} catch (err) {
-
-console.log("CAMERA ERROR:", err);
-
-popup("❌<br>CAMERA FAILED", "danger");
-
-}
-
-}
-
-
-
-// Tukar kamera secara automatik apabila pengguna memilih dari dropdown
-
-document.getElementById("camera-select").addEventListener("change", () => {
-
-if (scanner && scanner.isScanning) {
-
-mulaKamera();
-
-}
-
-});
-
-
-
-if (speechSynthesis) {
-
-speechSynthesis.onvoiceschanged = function() {
-
-speechSynthesis.getVoices();
-
-};
-
-}
-
-</script>
-
+  <h1>📷 ATTENDANCE SCANNER</h1>
+  <p>Scan Student QR Code</p>
+
+  <div class="controls-container">
+    <select id="camera-select">
+      <option value="user" selected>📷 Kamera Depan (Front)</option>
+      <option value="environment">📸 Kamera Belakang (Back)</option>
+    </select>
+    <button id="start-btn" onclick="mulaKamera()">MULA SCANNER</button>
+  </div>
+
+  <div id="reader"></div>
+  <div id="popup"></div>
+
+  <script>
+    // MASUKKAN URL WEB APP ANDA DI SINI
+    const API = "https://script.google.com/macros/s/AKfycbx4WM4cm1rNr8QePCjtsRtA4G2_vyQN96Q_KTN7eYkqTqPG5t1Mt65tINazBFtNh9yg/exec";
+
+    let scanner = null;
+    let sedangProses = false;
+
+    function popup(msg, kelas) {
+      const p = document.getElementById("popup");
+      p.className = kelas;
+      p.innerHTML = msg;
+      p.style.display = "block";
+
+      setTimeout(() => {
+        p.style.display = "none";
+      }, 3000);
+    }
+
+    function cakap(text) {
+      try {
+        speechSynthesis.cancel();
+        const suara = new SpeechSynthesisUtterance(text);
+        suara.lang = "en-US";
+        suara.rate = 0.9;
+        suara.pitch = 1.15;
+        suara.volume = 1.0;
+
+        const voices = speechSynthesis.getVoices();
+        const femaleKeywords = ["female", "woman", "girl", "samantha", "karen", "susan", "zira", "jenny", "aria", "ava", "emma", "sara", "sarah"];
+
+        let voice = voices.find(v => 
+          v.lang.toLowerCase().startsWith("en") && 
+          femaleKeywords.some(keyword => v.name.toLowerCase().includes(keyword))
+        );
+
+        if (!voice) voice = voices.find(v => v.lang.toLowerCase() === "en-us");
+        if (!voice) voice = voices.find(v => v.lang.toLowerCase().startsWith("en"));
+
+        if (voice) suara.voice = voice;
+        speechSynthesis.speak(suara);
+      } catch (e) {
+        console.log("Ralat suara:", e);
+      }
+    }
+
+    async function onScanSuccess(qrText) {
+      if (sedangProses) return;
+      sedangProses = true;
+
+      try {
+        const url = API + "?id=" + encodeURIComponent(qrText) + "&t=" + Date.now();
+        const res = await fetch(url, { method: "GET", redirect: "follow" });
+        const data = await res.json();
+
+        if (data.status === "BERJAYA") {
+          const infoNama = data.nama ? `<br><span style="font-size:18px;">${data.nama}</span>` : '';
+          const infoMasa = `<br><span style="font-size:14px; opacity:0.9;">Masa: ${data.masa}</span>`;
+          
+          cakap("Thank you. Your attendance has been recorded successfully.");
+          popup(`✅<br>RECORDED SUCCESSFULLY${infoNama}${infoMasa}`, "success");
+        } 
+        else if (data.status === "SUDAH_HADIR") {
+          const infoNama = data.nama ? `<br><span style="font-size:18px;">${data.nama}</span>` : '';
+          
+          cakap("You have already been recorded as present today.");
+          popup(`⚠️<br>ALREADY PRESENT${infoNama}`, "warning");
+        } 
+        else if (data.status === "TIDAK_DIJUMPAI") {
+          cakap("Sorry. This QR code is not recognized.");
+          popup("❌<br>QR CODE NOT RECOGNIZED", "danger");
+        } 
+        else {
+          cakap("Sorry. There was a problem recording your attendance.");
+          popup("❌<br>RECORDING ERROR", "danger");
+        }
+      } catch (err) {
+        console.log("SCAN ERROR:", err);
+        cakap("Sorry. There was a problem connecting to the attendance system.");
+        popup("❌<br>CONNECTION ERROR", "danger");
+      }
+
+      setTimeout(() => {
+        sedangProses = false;
+      }, 2500);
+    }
+
+    async function mulaKamera() {
+      if (speechSynthesis) speechSynthesis.getVoices();
+
+      const pilihanKamera = document.getElementById("camera-select").value;
+
+      try {
+        if (scanner) {
+          await scanner.stop();
+        } else {
+          scanner = new Html5Qrcode("reader");
+        }
+
+        await scanner.start(
+          { facingMode: pilihanKamera },
+          { fps: 10, qrbox: 250 },
+          onScanSuccess
+        );
+
+        document.getElementById("start-btn").innerText = "TUKAR KAMERA";
+
+      } catch (err) {
+        console.log("CAMERA ERROR:", err);
+        popup("❌<br>CAMERA FAILED", "danger");
+      }
+    }
+
+    document.getElementById("camera-select").addEventListener("change", () => {
+      if (scanner && scanner.isScanning) {
+        mulaKamera();
+      }
+    });
+
+    if (speechSynthesis) {
+      speechSynthesis.onvoiceschanged = function() {
+        speechSynthesis.getVoices();
+      };
+    }
+  </script>
 </body>
-
 </html>
