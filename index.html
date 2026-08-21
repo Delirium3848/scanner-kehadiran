@@ -24,28 +24,45 @@
       color: #666;
     }
 
-    #reader {
-      width: 100%;
-      max-width: 500px;
-      margin: auto;
+    /* Controls Layout */
+    .controls-container {
+      margin: 15px auto;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
     }
 
-    /* Start Overlay Button */
+    select, button {
+      padding: 10px 16px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      outline: none;
+    }
+
+    select {
+      background-color: white;
+      cursor: pointer;
+    }
+
     #start-btn {
       background-color: #2563eb;
       color: white;
       border: none;
-      padding: 15px 30px;
-      font-size: 18px;
-      font-weight: bold;
-      border-radius: 8px;
       cursor: pointer;
-      margin-top: 20px;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
 
     #start-btn:active {
       background-color: #1d4ed8;
+    }
+
+    #reader {
+      width: 100%;
+      max-width: 500px;
+      margin: auto;
     }
 
     /* Popup Display */
@@ -76,7 +93,13 @@
   <h1>📷 ATTENDANCE SCANNER</h1>
   <p>Scan Student QR Code</p>
 
-  <button id="start-btn" onclick="mulaKamera()">MULA SCANNER</button>
+  <div class="controls-container">
+    <select id="camera-select">
+      <option value="user" selected>📷 Kamera Depan (Front)</option>
+      <option value="environment">📸 Kamera Belakang (Back)</option>
+    </select>
+    <button id="start-btn" onclick="mulaKamera()">MULA SCANNER</button>
+  </div>
 
   <div id="reader"></div>
   <div id="popup"></div>
@@ -162,26 +185,39 @@
     }
 
     async function mulaKamera() {
-      // Mengaktifkan audio browser dengan sentuhan pertama
       if (speechSynthesis) speechSynthesis.getVoices();
 
-      document.getElementById("start-btn").style.display = "none";
+      const pilihanKamera = document.getElementById("camera-select").value;
 
       try {
-        scanner = new Html5Qrcode("reader");
+        // Jika scanner sedang berjalan, hentikan dulu sebelum tukar kamera
+        if (scanner) {
+          await scanner.stop();
+        } else {
+          scanner = new Html5Qrcode("reader");
+        }
 
-        // Menggunakan tetapan 'environment' untuk memaksa penggunaan kamera belakang
+        // Mula imbasan dengan mod kamera yang dipilih
         await scanner.start(
-          { facingMode: "environment" },
+          { facingMode: pilihanKamera },
           { fps: 10, qrbox: 250 },
           onScanSuccess
         );
+
+        document.getElementById("start-btn").innerText = "TUKAR KAMERA";
+
       } catch (err) {
         console.log("CAMERA ERROR:", err);
         popup("❌<br>CAMERA FAILED", "danger");
-        document.getElementById("start-btn").style.display = "inline-block";
       }
     }
+
+    // Tukar kamera secara automatik apabila pengguna memilih dari dropdown
+    document.getElementById("camera-select").addEventListener("change", () => {
+      if (scanner && scanner.isScanning) {
+        mulaKamera();
+      }
+    });
 
     if (speechSynthesis) {
       speechSynthesis.onvoiceschanged = function() {
@@ -190,4 +226,4 @@
     }
   </script>
 </body>
-</html>
+  </html>
