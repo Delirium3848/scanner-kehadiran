@@ -1,452 +1,193 @@
 <!DOCTYPE html>
-<html lang="ms">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attendance Scanner</title>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f7fa;
+      text-align: center;
+    }
 
-<title>Scan Kehadiran</title>
+    h1 {
+      margin-top: 15px;
+      margin-bottom: 5px;
+      font-size: 26px;
+    }
 
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    p {
+      margin-top: 0;
+      color: #666;
+    }
 
-<style>
+    #reader {
+      width: 100%;
+      max-width: 500px;
+      margin: auto;
+    }
 
-body{
-  margin:0;
-  font-family:Arial,sans-serif;
-  background:#f5f7fa;
-  text-align:center;
-}
+    /* Start Overlay Button */
+    #start-btn {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      font-size: 18px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
 
-h1{
-  margin-top:15px;
-  margin-bottom:5px;
-}
+    #start-btn:active {
+      background-color: #1d4ed8;
+    }
 
-p{
-  margin-top:0;
-  color:#666;
-}
+    /* Popup Display */
+    #popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      min-width: 280px;
+      max-width: 90%;
+      padding: 25px;
+      border-radius: 20px;
+      font-size: 24px;
+      font-weight: bold;
+      color: white;
+      display: none;
+      z-index: 9999;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    }
 
-#reader{
-  width:100%;
-  max-width:500px;
-  margin:auto;
-}
-
-#popup{
-
-  position:fixed;
-
-  top:50%;
-  left:50%;
-
-  transform:translate(-50%,-50%);
-
-  min-width:280px;
-
-  padding:25px;
-
-  border-radius:20px;
-
-  font-size:28px;
-
-  font-weight:bold;
-
-  color:white;
-
-  display:none;
-
-  z-index:9999;
-}
-
-.success{
-  background:#16a34a;
-}
-
-.warning{
-  background:#ca8a04;
-}
-
-.danger{
-  background:#dc2626;
-}
-
-</style>
-
+    .success { background: #16a34a; }
+    .warning { background: #ca8a04; }
+    .danger  { background: #dc2626; }
+  </style>
 </head>
 <body>
 
-<h1>📷 SCAN KEHADIRAN</h1>
-<p>Imbas QR Code murid</p>
+  <h1>📷 ATTENDANCE SCANNER</h1>
+  <p>Scan Student QR Code</p>
 
-<div id="reader"></div>
+  <button id="start-btn" onclick="mulaKamera()">MULA SCANNER</button>
 
-<div id="popup"></div>
+  <div id="reader"></div>
+  <div id="popup"></div>
 
-<script>
+  <script>
+    const API = "https://script.google.com/macros/s/AKfycbx4WM4cm1rNr8QePCjtsRtA4G2_vyQN96Q_KTN7eYkqTqPG5t1Mt65tINazBFtNh9yg/exec";
 
-/******************************************
- APPS SCRIPT URL
-******************************************/
+    let scanner = null;
+    let sedangProses = false;
 
-const API =
-"https://script.google.com/macros/s/AKfycbx4WM4cm1rNr8QePCjtsRtA4G2_vyQN96Q_KTN7eYkqTqPG5t1Mt65tINazBFtNh9yg/exec";
+    function popup(msg, kelas) {
+      const p = document.getElementById("popup");
+      p.className = kelas;
+      p.innerHTML = msg;
+      p.style.display = "block";
 
-let scanner;
-let sedangProses=false;
+      setTimeout(() => {
+        p.style.display = "none";
+      }, 2000);
+    }
 
-/******************************************
- POPUP
-******************************************/
+    function cakap(text) {
+      try {
+        speechSynthesis.cancel();
+        const suara = new SpeechSynthesisUtterance(text);
+        suara.lang = "en-US";
+        suara.rate = 0.9;
+        suara.pitch = 1.15;
+        suara.volume = 1.0;
 
-function popup(msg,kelas){
+        const voices = speechSynthesis.getVoices();
+        const femaleKeywords = ["female", "woman", "girl", "samantha", "karen", "susan", "zira", "jenny", "aria", "ava", "emma", "sara", "sarah"];
 
- const p=document.getElementById("popup");
+        let voice = voices.find(v => 
+          v.lang.toLowerCase().startsWith("en") && 
+          femaleKeywords.some(keyword => v.name.toLowerCase().includes(keyword))
+        );
 
- p.className=kelas;
+        if (!voice) voice = voices.find(v => v.lang.toLowerCase() === "en-us");
+        if (!voice) voice = voices.find(v => v.lang.toLowerCase().startsWith("en"));
 
- p.innerHTML=msg;
+        if (voice) suara.voice = voice;
+        speechSynthesis.speak(suara);
+      } catch (e) {
+        console.log("Ralat suara:", e);
+      }
+    }
 
- p.style.display="block";
+    async function onScanSuccess(qrText) {
+      if (sedangProses) return;
+      sedangProses = true;
 
- setTimeout(()=>{
+      try {
+        const url = API + "?id=" + encodeURIComponent(qrText) + "&t=" + Date.now();
+        const res = await fetch(url);
+        const data = await res.json();
 
-   p.style.display="none";
-
- },2000);
-
-}
-
-/******************************************
- SUARA PEREMPUAN
-******************************************/
-
-function cakap(text){
-
-  try{
-
-    speechSynthesis.cancel();
-
-    const suara =
-      new SpeechSynthesisUtterance(text);
-
-
-    /*
-     * BAHASA MELAYU
-     */
-    suara.lang = "ms-MY";
-
-
-    /*
-     * KELAJUAN
-     */
-    suara.rate = 1.0;
-
-
-    /*
-     * NADA
-     *
-     * Sedikit tinggi supaya
-     * bunyi lebih feminin
-     */
-    suara.pitch = 1.15;
-
-
-    /*
-     * VOLUME
-     */
-    suara.volume = 1.0;
-
-
-    /*
-     * DAPATKAN SEMUA VOICE
-     */
-    const voices =
-      speechSynthesis.getVoices();
-
-
-    /*
-     * CARI VOICE MELAYU
-     */
-    let voice =
-      voices.find(
-        v =>
-          (
-            v.lang || ""
-          )
-          .toLowerCase()
-          .startsWith("ms")
-      );
-
-
-    /*
-     * Jika ada nama voice yang
-     * menunjukkan suara perempuan,
-     * utamakan voice tersebut.
-     */
-
-    const femaleKeywords = [
-
-      "female",
-      "woman",
-      "girl",
-      "siti",
-      "melayu",
-      "malay"
-
-    ];
-
-
-    const femaleVoice =
-      voices.find(
-        v => {
-
-          const name =
-            (
-              v.name || ""
-            ).toLowerCase();
-
-
-          const lang =
-            (
-              v.lang || ""
-            ).toLowerCase();
-
-
-          return (
-
-            lang.startsWith("ms") &&
-
-            femaleKeywords.some(
-              keyword =>
-                name.includes(keyword)
-            )
-
-          );
-
+        if (data.status === "BERJAYA") {
+          cakap("Thank you. Your attendance has been recorded successfully.");
+          popup("✅<br>SUCCESSFULLY RECORDED", "success");
+        } 
+        else if (data.status === "SUDAH_HADIR") {
+          cakap("You have already been recorded as present today.");
+          popup("⚠️<br>ALREADY PRESENT", "warning");
+        } 
+        else if (data.status === "TIDAK_DIJUMPAI") {
+          cakap("Sorry. This QR code is not recognized.");
+          popup("❌<br>QR CODE NOT RECOGNIZED", "danger");
+        } 
+        else {
+          cakap("Sorry. There was a problem recording your attendance.");
+          popup("❌<br>RECORDING ERROR", "danger");
         }
-      );
+      } catch (err) {
+        console.log("SCAN ERROR:", err);
+        cakap("Sorry. There was a problem connecting to the attendance system.");
+        popup("❌<br>CONNECTION ERROR", "danger");
+      }
 
-
-    if(femaleVoice){
-
-      voice =
-        femaleVoice;
-
+      setTimeout(() => {
+        sedangProses = false;
+      }, 2000);
     }
 
+    async function mulaKamera() {
+      // Mengaktifkan audio browser dengan sentuhan pertama
+      if (speechSynthesis) speechSynthesis.getVoices();
 
-    /*
-     * JIKA TIADA VOICE MELAYU
-     * CUBA INDONESIA
-     */
+      document.getElementById("start-btn").style.display = "none";
 
-    if(!voice){
+      try {
+        scanner = new Html5Qrcode("reader");
 
-      voice =
-        voices.find(
-          v =>
-            (
-              v.lang || ""
-            )
-            .toLowerCase()
-            .startsWith("id")
+        // Menggunakan tetapan 'environment' untuk memaksa penggunaan kamera belakang
+        await scanner.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: 250 },
+          onScanSuccess
         );
-
+      } catch (err) {
+        console.log("CAMERA ERROR:", err);
+        popup("❌<br>CAMERA FAILED", "danger");
+        document.getElementById("start-btn").style.display = "inline-block";
+      }
     }
 
-
-    /*
-     * JIKA MASIH TIADA,
-     * CUBA VOICE ENGLISH FEMALE
-     */
-
-    if(!voice){
-
-      voice =
-        voices.find(
-          v => {
-
-            const name =
-              (
-                v.name || ""
-              ).toLowerCase();
-
-
-            return (
-
-              (
-                v.lang || ""
-              )
-              .toLowerCase()
-              .startsWith("en") &&
-
-              femaleKeywords.some(
-                keyword =>
-                  name.includes(keyword)
-              )
-
-            );
-
-          }
-        );
-
+    if (speechSynthesis) {
+      speechSynthesis.onvoiceschanged = function() {
+        speechSynthesis.getVoices();
+      };
     }
-
-
-    if(voice){
-
-      suara.voice =
-        voice;
-
-      console.log(
-        "VOICE DIPILIH:",
-        voice.name,
-        voice.lang
-      );
-
-    }
-
-
-    speechSynthesis.speak(
-      suara
-    );
-
-
-  }catch(e){
-
-    console.log(
-      "Ralat suara:",
-      e
-    );
-
-  }
-
-}
-/******************************************
- SCAN BERJAYA
-******************************************/
-
-async function onScanSuccess(qrText){
-
- if(sedangProses) return;
-
- sedangProses=true;
-
- try{
-
-   const url=
-   API+
-   "?id="+encodeURIComponent(qrText)+
-   "&t="+Date.now();
-
-   const res=
-   await fetch(url);
-
-   const data=
-   await res.json();
-
-   if(data.status==="BERJAYA"){
-
-      cakap("Terima kasih");
-
-      popup(
-      "✅<br>BERJAYA DIREKOD",
-      "success"
-      );
-
-   }
-
-   else if(data.status==="SUDAH_HADIR"){
-
-      cakap("Sudah hadir");
-
-      popup(
-      "⚠️<br>SUDAH HADIR",
-      "warning"
-      );
-
-   }
-
-   else{
-
-      cakap("ID tidak dijumpai");
-
-      popup(
-      "❌<br>ID TIDAK DIJUMPAI",
-      "danger"
-      );
-
-   }
-
- }catch(err){
-
-   popup(
-   "❌<br>RALAT",
-   "danger"
-   );
-
- }
-
- setTimeout(()=>{
-
-   sedangProses=false;
-
- },2000);
-
-}
-
-/******************************************
- MULA CAMERA AUTOMATIK
-******************************************/
-
-async function mula(){
-
- try{
-
-   const cameras=
-   await Html5Qrcode.getCameras();
-
-   if(!cameras.length){
-
-      popup(
-      "❌<br>TIADA KAMERA",
-      "danger"
-      );
-
-      return;
-   }
-
-   scanner=
-   new Html5Qrcode("reader");
-
-   await scanner.start(
-
-      cameras[0].id,
-
-      {
-        fps:10,
-        qrbox:250
-      },
-
-      onScanSuccess
-
-   );
-
- }catch(err){
-
-   popup(
-   "❌<br>KAMERA GAGAL",
-   "danger"
-   );
-
- }
-
-}
-
-window.onload=mula;
-
-</script>
-
+  </script>
 </body>
 </html>
