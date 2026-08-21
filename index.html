@@ -105,7 +105,7 @@
   <div id="popup"></div>
 
   <script>
-    // MASUKKAN URL WEB APP PROJEK AVATAR BAHARU DI SINI
+    // URL WEB APP PROJEK AVATAR BAHARU
     const API = "https://script.google.com/macros/s/AKfycbxB6vbewJrDnTth0KhG2czE0TyWHcwEwYH5mmr3enMjgVmU_q5h8wGs3KEper1mfKY3/exec";
 
     let scanner = null;
@@ -119,7 +119,7 @@
 
       setTimeout(() => {
         p.style.display = "none";
-      }, 3000);
+      }, 2500);
     }
 
     function cakap(text) {
@@ -127,8 +127,8 @@
         speechSynthesis.cancel();
         const suara = new SpeechSynthesisUtterance(text);
         suara.lang = "en-US";
-        suara.rate = 0.9;
-        suara.pitch = 1.15;
+        suara.rate = 1.0;
+        suara.pitch = 1.1;
         suara.volume = 1.0;
 
         const voices = speechSynthesis.getVoices();
@@ -162,32 +162,41 @@
           const infoNama = data.nama ? `<br><span style="font-size:18px;">${data.nama}</span>` : '';
           const infoMasa = `<br><span style="font-size:14px; opacity:0.9;">Masa: ${data.masa}</span>`;
           
-          cakap("Thank you. Your attendance has been recorded successfully.");
+          cakap("Thank you. Recorded successfully.");
           popup(`✅<br>RECORDED SUCCESSFULLY${infoNama}${infoMasa}`, "success");
         } 
         else if (data.status === "SUDAH_HADIR") {
           const infoNama = data.nama ? `<br><span style="font-size:18px;">${data.nama}</span>` : '';
           
-          cakap("You have already been recorded as present today.");
+          cakap("Already present today.");
           popup(`⚠️<br>ALREADY PRESENT${infoNama}`, "warning");
         } 
         else if (data.status === "TIDAK_DIJUMPAI") {
-          cakap("Sorry. This QR code is not recognized.");
+          cakap("QR code not recognized.");
           popup("❌<br>QR CODE NOT RECOGNIZED", "danger");
         } 
         else {
-          cakap("Sorry. There was a problem recording your attendance.");
+          cakap("Recording error.");
           popup("❌<br>RECORDING ERROR", "danger");
         }
       } catch (err) {
         console.log("SCAN ERROR:", err);
-        cakap("Sorry. There was a problem connecting to the attendance system.");
+        cakap("Connection error.");
         popup("❌<br>CONNECTION ERROR", "danger");
       }
 
       setTimeout(() => {
         sedangProses = false;
-      }, 2500);
+      }, 1500); // Cooldown dipercepatkan kepada 1.5 saat
+    }
+
+    // Saiz kotakkan imbasan dinamik mengikut saiz paparan peranti
+    function getQrBoxSize(viewfinderWidth, viewfinderHeight) {
+      const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+      return {
+        width: Math.floor(minEdge * 0.75),
+        height: Math.floor(minEdge * 0.75)
+      };
     }
 
     async function mulaKamera() {
@@ -202,9 +211,18 @@
           scanner = new Html5Qrcode("reader");
         }
 
+        const config = {
+          fps: 30, // FPS dinaikkan ke 30 untuk tindak balas sangat pantas
+          qrbox: getQrBoxSize,
+          aspectRatio: 1.0,
+          experimentalFeatures: {
+            useBarCodeDetectorIfSupported: true // Gunakan perkakasan pemprosesan pengesan terbina
+          }
+        };
+
         await scanner.start(
           { facingMode: pilihanKamera },
-          { fps: 10, qrbox: 250 },
+          config,
           onScanSuccess
         );
 
