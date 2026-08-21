@@ -123,18 +123,100 @@ function popup(msg,kelas){
 
 function cakap(text){
 
- try{
+  try{
 
-   speechSynthesis.cancel();
+    speechSynthesis.cancel();
 
-   const suara=
-   new SpeechSynthesisUtterance(text);
+    const suara =
+      new SpeechSynthesisUtterance(text);
 
-   suara.lang="ms-MY";
+    /*
+     * BAHASA
+     */
+    suara.lang = "ms-MY";
 
-   speechSynthesis.speak(suara);
 
- }catch(e){}
+    /*
+     * KELAJUAN
+     *
+     * 1.0 = normal
+     * 0.9 = sedikit perlahan
+     * 0.8 = perlahan
+     * 1.1 = sedikit laju
+     */
+    suara.rate = 0.9;
+
+
+    /*
+     * NADA SUARA
+     *
+     * 1.0 = normal
+     * 0.8 = lebih rendah
+     * 1.2 = lebih tinggi
+     */
+    suara.pitch = 1.0;
+
+
+    /*
+     * VOLUME
+     *
+     * 0.0 - 1.0
+     */
+    suara.volume = 1.0;
+
+
+    /*
+     * CARI SUARA MELAYU
+     */
+
+    const voices =
+      speechSynthesis.getVoices();
+
+
+    let voice =
+      voices.find(
+        v =>
+          v.lang.toLowerCase()
+            .startsWith("ms")
+      );
+
+
+    /*
+     * Jika tiada suara Melayu,
+     * cuba Bahasa Indonesia
+     */
+
+    if(!voice){
+
+      voice =
+        voices.find(
+          v =>
+            v.lang.toLowerCase()
+              .startsWith("id")
+        );
+
+    }
+
+
+    if(voice){
+
+      suara.voice = voice;
+
+    }
+
+
+    speechSynthesis.speak(
+      suara
+    );
+
+  }catch(e){
+
+    console.log(
+      "Ralat suara:",
+      e
+    );
+
+  }
 
 }
 
