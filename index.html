@@ -425,14 +425,13 @@
           onScanSuccess
         );
 
-        document.getElementById("start-btn").innerHTML = "🔄 TUKAR KAMERA";
-
       } catch (err) {
         console.log("CAMERA ERROR:", err);
         popup("❌<br>CAMERA FAILED", "danger");
       }
     }
 
+    // Automatik tukar kamera apabila pengguna pilih kamera lain dari dropdown
     document.getElementById("camera-select").addEventListener("change", () => {
       if (scanner && scanner.isScanning) {
         mulaKamera();
