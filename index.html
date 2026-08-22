@@ -2,137 +2,203 @@
 <html lang="ms">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Attendance Scanner - SK Kuala Merotai</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Attendance Scanner Pro - SK Kuala Merotai</title>
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f5f7fa;
-      text-align: center;
-      padding-bottom: 30px;
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
-    /* Header & Logo */
-    .header-container {
-      margin-top: 20px;
-      margin-bottom: 10px;
+    body {
+      margin: 0;
+      background: linear-gradient(135deg, #0f172a, #1e1b4b, #1e293b);
+      color: #f8fafc;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      gap: 8px;
+      padding: 20px 12px;
+    }
+
+    /* Container Card Utama */
+    .main-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 28px;
+      padding: 22px 18px;
+      width: min(100%, 480px);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+      text-align: center;
+    }
+
+    /* Header & Logo */
+    .header-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 18px;
     }
 
     .school-logo {
-      width: 75px;
-      height: 75px;
+      width: 80px;
+      height: 80px;
       border-radius: 50%;
-      background: white;
+      background: #ffffff;
       padding: 4px;
       object-fit: contain;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      box-shadow: 0 8px 25px rgba(59, 130, 246, 0.35);
+      border: 3px solid #3b82f6;
     }
 
     h1 {
-      margin: 0;
-      font-size: 24px;
-      color: #1e293b;
+      margin: 12px 0 2px;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      background: linear-gradient(135deg, #60a5fa, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
-    p {
-      margin-top: 3px;
-      color: #64748b;
-      font-size: 14px;
-      font-weight: bold;
+    .sub-title {
+      margin: 0;
+      color: #94a3b8;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
     }
 
     /* Controls Layout */
-    .controls-container {
-      margin: 15px auto;
+    .controls-group {
       display: flex;
-      justify-content: center;
       gap: 10px;
-      flex-wrap: wrap;
-      padding: 0 10px;
+      margin-bottom: 18px;
+      justify-content: center;
     }
 
     select, button, input {
-      padding: 10px 16px;
-      font-size: 15px;
-      font-weight: bold;
-      border-radius: 10px;
-      border: 2px solid #cbd5e1;
       outline: none;
-      box-sizing: border-box;
+      border-radius: 14px;
+      font-weight: 700;
+      font-size: 13px;
+      transition: all 0.25s ease;
     }
 
     select {
-      background-color: white;
+      background: rgba(30, 41, 59, 0.8);
+      color: #f1f5f9;
+      border: 1.5px solid #334155;
+      padding: 10px 14px;
       cursor: pointer;
+      flex: 1;
+    }
+
+    select:focus {
+      border-color: #60a5fa;
     }
 
     #start-btn {
-      background-color: #2563eb;
-      color: white;
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      color: #ffffff;
       border: none;
+      padding: 10px 18px;
       cursor: pointer;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      transition: 0.2s;
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    #start-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(37, 99, 235, 0.5);
     }
 
     #start-btn:active {
-      background-color: #1d4ed8;
+      transform: translateY(0);
+    }
+
+    /* Camera Scanner Frame */
+    .scanner-wrapper {
+      position: relative;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      background: #020617;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+      min-height: 260px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     #reader {
       width: 100%;
-      max-width: 500px;
-      margin: auto;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      border: none !important;
     }
 
-    /* Manual Input Section */
-    .manual-box {
-      background: white;
-      max-width: 480px;
-      margin: 20px auto 10px;
-      padding: 18px;
-      border-radius: 16px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-      border: 2px solid #e2e8f0;
-      width: 90%;
+    #reader video {
+      object-fit: cover !important;
+      border-radius: 18px;
     }
 
-    .manual-box h3 {
-      margin: 0 0 10px 0;
-      font-size: 15px;
-      color: #334155;
+    /* Input Manual Box */
+    .manual-card {
+      margin-top: 18px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      padding: 14px;
     }
 
-    .manual-form {
+    .manual-card h3 {
+      margin: 0 0 10px;
+      font-size: 12px;
+      color: #cbd5e1;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .manual-input-group {
       display: flex;
       gap: 8px;
-      justify-content: center;
     }
 
-    .manual-form input {
+    .manual-input-group input {
       flex: 1;
+      background: rgba(2, 6, 23, 0.7);
+      border: 1.5px solid #334155;
+      color: #ffffff;
+      padding: 11px 14px;
       text-align: center;
+      letter-spacing: 1px;
     }
 
-    .manual-form input:focus {
-      border-color: #2563eb;
+    .manual-input-group input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 12px rgba(59, 130, 246, 0.3);
     }
 
-    .btn-manual {
-      background-color: #16a34a;
+    .btn-manual-submit {
+      background: linear-gradient(135deg, #10b981, #059669);
       color: white;
       border: none;
+      padding: 11px 18px;
       cursor: pointer;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-manual-submit:hover {
+      transform: translateY(-2px);
     }
 
     /* Popup Display */
@@ -140,56 +206,83 @@
       position: fixed;
       top: 50%;
       left: 50%;
-      transform: translate(-50%, -50%);
-      min-width: 280px;
+      transform: translate(-50%, -50%) scale(0.8);
+      min-width: 290px;
       max-width: 90%;
-      padding: 25px;
-      border-radius: 20px;
-      font-size: 22px;
-      font-weight: bold;
+      padding: 25px 20px;
+      border-radius: 24px;
+      font-size: 20px;
+      font-weight: 800;
       color: white;
       display: none;
       z-index: 9999;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+      text-align: center;
+      opacity: 0;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+      backdrop-filter: blur(10px);
     }
 
-    .success { background: #16a34a; }
-    .warning { background: #ca8a04; }
-    .danger  { background: #dc2626; }
+    #popup.show {
+      display: block;
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+
+    .success { background: rgba(22, 163, 74, 0.95); border: 2px solid #4ade80; }
+    .warning { background: rgba(202, 138, 4, 0.95); border: 2px solid #facc15; }
+    .danger  { background: rgba(220, 38, 38, 0.95); border: 2px solid #f87171; }
+
+    /* Footer Info */
+    .footer-text {
+      margin-top: 15px;
+      font-size: 11px;
+      color: #64748b;
+    }
   </style>
 </head>
 <body>
 
-  <!-- HEADER DENGAN LOGO SEKOLAH -->
-  <div class="header-container">
-    <img class="school-logo" src="https://drive.google.com/thumbnail?id=1Wx4hU1DsnbSp4FHET_LenlUg7xFjxPnp&sz=w300" alt="Logo SK Kuala Merotai">
-    <h1>SK KUALA MEROTAI</h1>
-    <p>📷 Imbasan QR & Rekod Kehadiran Murid</p>
-  </div>
+  <div class="main-card">
+    <!-- HEADER -->
+    <div class="header-box">
+      <img class="school-logo" src="https://drive.google.com/thumbnail?id=1Wx4hU1DsnbSp4FHET_LenlUg7xFjxPnp&sz=w300" alt="SK Kuala Merotai">
+      <h1>SK KUALA MEROTAI</h1>
+      <p class="sub-title">Sistem Imbasan Kehadiran Avatar</p>
+    </div>
 
-  <div class="controls-container">
-    <select id="camera-select">
-      <option value="user" selected>📷 Kamera Depan (Front)</option>
-      <option value="environment">📸 Kamera Belakang (Back)</option>
-    </select>
-    <button id="start-btn" onclick="mulaKamera()">MULA SCANNER</button>
-  </div>
+    <!-- CONTROLS -->
+    <div class="controls-group">
+      <select id="camera-select">
+        <option value="user" selected>📷 Kamera Depan</option>
+        <option value="environment">📸 Kamera Belakang</option>
+      </select>
+      <button id="start-btn" onclick="mulaKamera()">🚀 MULA SCANNER</button>
+    </div>
 
-  <div id="reader"></div>
+    <!-- SCANNER FRAME -->
+    <div class="scanner-wrapper">
+      <div id="reader"></div>
+    </div>
 
-  <!-- FORM MASUKKAN ID MANUAL JIKA QR ROSAK -->
-  <div class="manual-box">
-    <h3>⌨️ Borang Masukkan ID Murid Manual (Jika QR Rosak)</h3>
-    <div class="manual-form">
-      <input type="text" id="manual-id-input" placeholder="Masukkan ID_MURID" onkeypress="handleManualKeyPress(event)">
-      <button class="btn-manual" onclick="hantarManualID()">HANTAR</button>
+    <!-- MANUAL INPUT FORM -->
+    <div class="manual-card">
+      <h3>⌨️ Masukkan ID Murid Manual</h3>
+      <div class="manual-input-group">
+        <input type="text" id="manual-id-input" placeholder="Taip ID_MURID..." onkeypress="handleManualKeyPress(event)">
+        <button class="btn-manual-submit" onclick="hantarManualID()">HANTAR</button>
+      </div>
+    </div>
+
+    <div class="footer-text">
+      SK Kuala Merotai • PPD Tawau
     </div>
   </div>
 
+  <!-- POPUP NOTIFIKASI -->
   <div id="popup"></div>
 
   <script>
-    // URL WEB APP PROJEK AVATAR BAHARU
     const API = "https://script.google.com/macros/s/AKfycbxB6vbewJrDnTth0KhG2czE0TyWHcwEwYH5mmr3enMjgVmU_q5h8wGs3KEper1mfKY3/exec";
 
     let scanner = null;
@@ -199,10 +292,10 @@
       const p = document.getElementById("popup");
       p.className = kelas;
       p.innerHTML = msg;
-      p.style.display = "block";
+      p.classList.add("show");
 
       setTimeout(() => {
-        p.style.display = "none";
+        p.classList.remove("show");
       }, 2500);
     }
 
@@ -243,14 +336,14 @@
         const data = await res.json();
 
         if (data.status === "BERJAYA") {
-          const infoNama = data.nama ? `<br><span style="font-size:18px;">${data.nama}</span>` : '';
-          const infoMasa = `<br><span style="font-size:14px; opacity:0.9;">Masa: ${data.masa}</span>`;
+          const infoNama = data.nama ? `<br><span style="font-size:17px; font-weight:700; color:#fef08a;">${data.nama}</span>` : '';
+          const infoMasa = `<br><span style="font-size:13px; opacity:0.85;">Masa: ${data.masa}</span>`;
           
           cakap("Thank you. Recorded successfully.");
           popup(`✅<br>RECORDED SUCCESSFULLY${infoNama}${infoMasa}`, "success");
         } 
         else if (data.status === "SUDAH_HADIR") {
-          const infoNama = data.nama ? `<br><span style="font-size:18px;">${data.nama}</span>` : '';
+          const infoNama = data.nama ? `<br><span style="font-size:17px; font-weight:700; color:#fef08a;">${data.nama}</span>` : '';
           
           cakap("Already present today.");
           popup(`⚠️<br>ALREADY PRESENT${infoNama}`, "warning");
@@ -332,7 +425,7 @@
           onScanSuccess
         );
 
-        document.getElementById("start-btn").innerText = "TUKAR KAMERA";
+        document.getElementById("start-btn").innerHTML = "🔄 TUKAR KAMERA";
 
       } catch (err) {
         console.log("CAMERA ERROR:", err);
